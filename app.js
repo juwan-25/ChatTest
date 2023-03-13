@@ -23,15 +23,27 @@ app.get('/', function(request, response){
 });
 
 io.sockets.on('connection', function(socket) {
-    console.log('유저 접속');
 
-    socket.on('send', function(data) {
-        console.log('전달된 메시지 : ', data.msg)
+    /* 새로운 유저 접속시 다른 소켓에 알림 */
+    socket.on('newUser', function(name) {
+        console.log(name + '님이 접속하였습니다! ');
+        socket.name = name;
+        io.sockets.emit('update', {type: 'connect', name: 'SERVER', message: name + '님이 접속하였습니다! '})
     });
 
+    /* 전송 메세지 받기 */
+    socket.on('message', function(data) {
+        data.name = socket.name;
+        console.log(data);
+        socket.broadcast.emit('update', data);
+    });
+
+    /* 접속 종료 */
     socket.on('disconnect', function() {
-        console.log('접속 종료');
+        console.log(socket.name + '님이 나가셨습니다:(');
+        socket.broadcast.emit('update', {type: 'connect', name: 'SERVER', message: socket.name + '님이 나가셨습니다:('});
     });
+    
 });
 
 server.listen(323, function(){
